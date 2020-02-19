@@ -1,0 +1,21 @@
+[package]
+name = "protocol"
+version = "0.1.0"
+authors = ["Kevin Hoffman <alothien@gmail.com>"]
+edition = "2018"
+description = "Protocol buffer primitives for the Gantry protocol"
+license = "Apache-2.0"
+#documentation = "https://docs.rs/wascc-codec"
+readme = "README.md"
+keywords = ["webassembly", "wasm", "codec", "gantry"]
+categories = ["wasm", "data-structures","encoding"]
+homepage = "https://wascc.dev"
+
+
+[dependencies]
+prost = "0.6.1"
+bytes = "0.5.4"
+prost-types = "0.6.1"
+
+[build-dependencies]
+prost-build = "0.6.1"

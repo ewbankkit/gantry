@@ -1,0 +1,19 @@
+[package]
+name = "catalog"
+version = "0.0.1"
+authors = ["Kevin Hoffman <alothien@gmail.com>"]
+edition = "2018"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+wascc-actor = "0.1.2"
+protocol = { path = "../protocol" }
+serde_json = "1.0.48"
+prost = "0.6.1"
+lazy_static = "1.4.0"
+
+[profile.release]
+# Optimize for small code size
+opt-level = "s"

@@ -1,0 +1,18 @@
+[package]
+name = "gantryclient"
+version = "0.0.1"
+authors = ["Kevin Hoffman <alothien@gmail.com>"]
+edition = "2018"
+keywords = ["waSCC", "WebAssembly"]
+categories = ["command-line-utilities", "network-programming", "wasm"]
+
+
+[dependencies]
+natsclient = "0.0.6"
+protocol = { path = "../../protocol" }
+log = "0.4.8"
+serde_derive = "1"
+serde = "1"
+serde_json = "1.0.48"
+prost = "0.6.1"
+crossbeam = "0.7.3"

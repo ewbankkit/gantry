@@ -1,0 +1,62 @@
+syntax = "proto3";
+
+package catalog;
+
+// A token contains the raw string for a JWT signed with the ed25519 signature
+// format. Actors, Accounts, Operators are all identified by tokens
+message Token {
+    string raw_token = 1;
+    string decoded_token_json = 2;
+    TokenValidation validation_result = 3;
+}
+
+// A protobuf message version of the validation result that the wascap 
+// library provides
+message TokenValidation {
+    bool expired = 1;
+    string expires_human = 2;
+    string not_before_human = 3;
+    bool cannot_use_yet = 4;
+    bool signature_valid = 5;
+}
+
+// Represents the metadata on file for a given actor. This metadata is roughly
+// the same as the information contained in the actor's embedded and signed JWT, and
+// does NOT include the actor's raw bytes.
+message ActorSummary {
+    string public_key = 1;
+    repeated string capabilities = 2;
+    bool provider = 3;
+    repeated string tags = 4;
+    string version = 5;
+    uint64 revision = 6;
+    string account = 7;
+    string name = 8;
+}
+
+message AccountSummary {
+    string public_key = 1;
+    string name = 2;
+}
+
+message CatalogQuery {
+    QueryType query_type = 1;
+    string issuer = 2; // Optional issuer filter 
+}
+
+message CatalogQueryResults {
+    repeated CatalogQueryResult results = 1;
+}
+
+message CatalogQueryResult {
+    string subject = 1;
+    string issuer = 2;
+    string name = 3;
+    ActorSummary actor = 4;    
+}
+
+enum QueryType {
+    ACTOR = 0;
+    ACCOUNT = 1;
+    OPERATOR = 2;
+}
