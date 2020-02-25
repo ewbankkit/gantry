@@ -13,9 +13,16 @@ pub struct Client {
 }
 
 impl Client {
-    pub fn new() -> Client {
+    pub fn new(nats_urls: Vec<String>, jwt: &str, seed: &str) -> Client {
         Client {
-            natsclient: broker::get_client().unwrap(),
+            natsclient: broker::get_client(nats_urls, Some(jwt), Some(seed)).unwrap(),
+        }
+    }
+
+    pub fn default() -> Client {
+        Client {
+            natsclient: broker::get_client(vec!["nats://localhost:4222".into()], None, None)
+                .unwrap(),
         }
     }
 

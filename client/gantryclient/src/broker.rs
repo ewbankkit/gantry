@@ -113,10 +113,22 @@ pub(crate) fn upload_chunk(
     Ok(())
 }
 
-pub(crate) fn get_client() -> Result<Client, Box<dyn ::std::error::Error>> {
+pub(crate) fn get_client(
+    nats_urls: Vec<String>,
+    jwt: Option<&str>,
+    seed: Option<&str>,
+) -> Result<Client, Box<dyn ::std::error::Error>> {
+    let mut auth_style = AuthenticationStyle::Anonymous;
+    if jwt.is_some() && seed.is_some() {
+        auth_style = AuthenticationStyle::UserCredentials(
+            jwt.unwrap().to_string(),
+            seed.unwrap().to_string(),
+        );
+    }
+
     let opts = ClientOptions::builder()
-        .cluster_uris(vec!["nats://localhost:4222".into()])
-        .authentication(AuthenticationStyle::Anonymous)
+        .cluster_uris(nats_urls)
+        .authentication(auth_style)
         .build()?;
 
     let client = Client::from_options(opts)?;
