@@ -3,13 +3,18 @@ name = "gantryclient"
 version = "0.0.1"
 authors = ["Kevin Hoffman <alothien@gmail.com>"]
 edition = "2018"
-keywords = ["waSCC", "WebAssembly"]
-categories = ["command-line-utilities", "network-programming", "wasm"]
+homepage = "https://wascc.dev"
+description = "Gantry (waSCC actor registry) client"
+license = "Apache-2.0"
+documentation = "https://docs.rs/wascc-host"
+readme = "README.md"
+keywords = ["webassembly", "wasm", "wasi", "wascc", "gantry"]
+categories = ["wasm", "api-bindings","command-line-utilities"]
 
 
 [dependencies]
 natsclient = "0.0.6"
-gantry-protocol = { path = "../../protocol" }
+gantry-protocol = "0.0.1"
 log = "0.4.8"
 serde_derive = "1"
 serde = "1"

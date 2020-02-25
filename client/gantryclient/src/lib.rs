@@ -1,6 +1,6 @@
-use gantry_protocol as protocol;
 pub use broker::CHUNK_SIZE;
 pub use chunks::Chunks;
+use gantry_protocol as protocol;
 pub use protocol::catalog::{CatalogQuery, CatalogQueryResults, Token};
 pub use protocol::stream::{DownloadRequest, FileChunk, TransferAck, UploadRequest};
 
