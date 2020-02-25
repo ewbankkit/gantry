@@ -1,5 +1,5 @@
 use gantryclient::{Chunks, Client, CHUNK_SIZE};
-
+use gantry_protocol as protocol;
 use protocol::catalog::*;
 use std::io::Read;
 use std::io::Write;
@@ -89,7 +89,7 @@ fn query(cmd: GetCommand) -> Result<(), Box<dyn ::std::error::Error>> {
         query_type: to_catalog_query_type(&cmd),
         issuer: "".to_string(),
     };
-    let client = Client::new();
+    let client = Client::default();
     let results = client.query_catalog(&query)?;
     if results.results.is_empty() {
         println!("No results.");
@@ -144,13 +144,13 @@ fn put(cmd: PutCommand) -> Result<(), Box<dyn ::std::error::Error>> {
         decoded_token_json: "".to_string(),
         validation_result: None,
     };
-    let client = Client::new();
+    let client = Client::default();
     client.put_token(&token)?;
     Ok(())
 }
 
 fn download(cmd: DownloadCommand) -> Result<(), Box<dyn ::std::error::Error>> {
-    let client = Client::new();
+    let client = Client::default();
     use indicatif::{ProgressBar, ProgressStyle};
 
     let pb = ProgressBar::new(0);
@@ -206,7 +206,7 @@ fn upload(cmd: UploadCommand) -> Result<(), Box<dyn ::std::error::Error>> {
         total_bytes: fsize,
         total_chunks: fsize / CHUNK_SIZE,
     };
-    let client = Client::new();
+    let client = Client::default();
     let _ack = client.start_upload(&req)?;
 
     let f = ::std::fs::File::open(&cmd.actor_path)?;

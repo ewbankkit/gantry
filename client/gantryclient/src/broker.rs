@@ -1,3 +1,4 @@
+use gantry_protocol as protocol;
 use natsclient::{AuthenticationStyle, Client, ClientOptions};
 use prost::Message;
 use protocol::catalog::*;

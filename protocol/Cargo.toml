@@ -1,11 +1,11 @@
 [package]
-name = "protocol"
-version = "0.1.0"
+name = "gantry-protocol"
+version = "0.0.1"
 authors = ["Kevin Hoffman <alothien@gmail.com>"]
 edition = "2018"
 description = "Protocol buffer primitives for the Gantry protocol"
 license = "Apache-2.0"
-#documentation = "https://docs.rs/wascc-codec"
+documentation = "https://docs.rs/gantry-protocol"
 readme = "README.md"
 keywords = ["webassembly", "wasm", "codec", "gantry"]
 categories = ["wasm", "data-structures","encoding"]

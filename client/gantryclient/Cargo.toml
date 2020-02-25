@@ -9,7 +9,7 @@ categories = ["command-line-utilities", "network-programming", "wasm"]
 
 [dependencies]
 natsclient = "0.0.6"
-protocol = { path = "../../protocol" }
+gantry-protocol = { path = "../../protocol" }
 log = "0.4.8"
 serde_derive = "1"
 serde = "1"

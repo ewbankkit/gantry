@@ -1,3 +1,4 @@
+use gantry_protocol as protocol;
 pub use broker::CHUNK_SIZE;
 pub use chunks::Chunks;
 pub use protocol::catalog::{CatalogQuery, CatalogQueryResults, Token};
