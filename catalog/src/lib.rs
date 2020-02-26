@@ -16,6 +16,7 @@
 extern crate lazy_static;
 
 extern crate wascc_actor as actor;
+use gantry_protocol as protocol;
 
 use actor::prelude::*;
 use std::sync::RwLock;

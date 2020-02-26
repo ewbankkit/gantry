@@ -1,4 +1,5 @@
 use actor::prelude::*;
+use gantry_protocol as protocol;
 use protocol::catalog::*;
 use protocol::token::TokenType;
 

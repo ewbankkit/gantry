@@ -99,6 +99,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "37ab347416e802de484e4d03c7316c48f1ecb56574dfd4a46a80f173ce1de04d"
 
 [[package]]
+name = "gantry-protocol"
+version = "0.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f982edfb9b3ae8679bcc75fb9d3aaf0bdf476e0a3631a494fdd9836dd3c20f08"
+dependencies = [
+ "bytes 0.5.4",
+ "prost 0.6.1",
+ "prost-build",
+ "prost-types 0.6.1",
+]
+
+[[package]]
 name = "getrandom"
 version = "0.1.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -292,16 +304,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "protocol"
-version = "0.1.0"
-dependencies = [
- "bytes 0.5.4",
- "prost 0.6.1",
- "prost-build",
- "prost-types 0.6.1",
-]
-
-[[package]]
 name = "quote"
 version = "0.6.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -419,8 +421,8 @@ dependencies = [
 name = "streams"
 version = "0.0.1"
 dependencies = [
+ "gantry-protocol",
  "prost 0.6.1",
- "protocol",
  "serde_json",
  "wascc-actor",
 ]
@@ -494,7 +496,9 @@ dependencies = [
 
 [[package]]
 name = "wascc-actor"
-version = "0.2.0"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7fd1d270ce40f189156cde3137144023a286a7af6600a1b1d8e7aa69ddeb45e8"
 dependencies = [
  "prost 0.6.1",
  "prost-types 0.6.1",
@@ -507,9 +511,9 @@ dependencies = [
 
 [[package]]
 name = "wascc-codec"
-version = "0.4.0"
+version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "784bbff6489ea978dad99cc48a4a491afd0b72cbe45af886e3c3aad87faeb6e0"
+checksum = "45cad687fdbb5776fa15df3399315083912aae3b03018af89e1ca061103c1b29"
 dependencies = [
  "bytes 0.5.4",
  "prost 0.6.1",

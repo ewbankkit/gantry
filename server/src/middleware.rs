@@ -6,6 +6,7 @@ use wascap::jwt::Actor;
 use wascap::jwt::Operator;
 use wascc_host::host::{Invocation, InvocationResponse};
 use wascc_host::Middleware;
+use gantry_protocol as protocol;
 
 pub(crate) struct JWTDecoder {}
 

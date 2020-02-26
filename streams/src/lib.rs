@@ -13,6 +13,7 @@
 // limitations under the License.
 
 extern crate wascc_actor as actor;
+use gantry_protocol as protocol;
 use actor::prelude::*;
 use protocol::stream::{
     DownloadRequest, TransferAck, UploadRequest, SUBJECT_STREAM_DOWNLOAD_PREFIX,
