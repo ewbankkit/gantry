@@ -1,11 +1,17 @@
-use gantryclient::{Chunks, Client, CHUNK_SIZE};
 use gantry_protocol as protocol;
+use gantryclient::{Chunks, Client, ConnectionConfiguration, CHUNK_SIZE};
 use protocol::catalog::*;
 use std::io::Read;
-use std::io::Write;
-use std::{fs::OpenOptions, path::PathBuf};
+use std::io::{self, Write};
+use std::{
+    fs::{File, OpenOptions},
+    path::{Path, PathBuf},
+};
 use structopt::clap::AppSettings;
 use structopt::StructOpt;
+use text_io::read;
+
+extern crate serde_yaml;
 
 #[derive(Debug, StructOpt, Clone)]
 #[structopt(
@@ -31,6 +37,10 @@ enum CliCommand {
     /// Uploads an actor module to the registry
     #[structopt(name = "upload")]
     Upload(UploadCommand),
+    /// Stores connection information to a Gantry server
+    Login,
+    /// Removes stored connection information, if it exists
+    Logout,
 }
 
 #[derive(Debug, Clone, StructOpt)]
@@ -81,6 +91,8 @@ fn handle_command(cmd: CliCommand) -> Result<(), Box<dyn ::std::error::Error>> {
         CliCommand::Put(put_cmd) => put(put_cmd),
         CliCommand::Download(download_cmd) => download(download_cmd),
         CliCommand::Upload(upload_cmd) => upload(upload_cmd),
+        CliCommand::Login => login(),
+        CliCommand::Logout => logout(),
     }
 }
 
@@ -89,7 +101,7 @@ fn query(cmd: GetCommand) -> Result<(), Box<dyn ::std::error::Error>> {
         query_type: to_catalog_query_type(&cmd),
         issuer: "".to_string(),
     };
-    let client = Client::default();
+    let client = client();
     let results = client.query_catalog(&query)?;
     if results.results.is_empty() {
         println!("No results.");
@@ -144,13 +156,13 @@ fn put(cmd: PutCommand) -> Result<(), Box<dyn ::std::error::Error>> {
         decoded_token_json: "".to_string(),
         validation_result: None,
     };
-    let client = Client::default();
+    let client = client();
     client.put_token(&token)?;
     Ok(())
 }
 
 fn download(cmd: DownloadCommand) -> Result<(), Box<dyn ::std::error::Error>> {
-    let client = Client::default();
+    let client = client();
     use indicatif::{ProgressBar, ProgressStyle};
 
     let pb = ProgressBar::new(0);
@@ -227,6 +239,72 @@ fn upload(cmd: UploadCommand) -> Result<(), Box<dyn ::std::error::Error>> {
     });
     pb.finish_with_message("uploaded");
     Ok(())
+}
+
+fn get_client() -> Result<Client, Box<dyn ::std::error::Error>> {
+    let file_path = Path::join(&dirs::home_dir().unwrap(), ".gantry/config.yaml");
+    let mut file = File::open(file_path)?;
+    let mut buf = Vec::new();
+    file.read_to_end(&mut buf)?;
+    let config: ConnectionConfiguration = serde_yaml::from_slice(&buf)?;
+    Ok(Client::from_config(config))
+}
+
+fn client() -> Client {
+    match get_client() {
+        Ok(c) => c,
+        Err(_) => Client::default(),
+    }
+}
+
+fn logout() -> Result<(), Box<dyn ::std::error::Error>> {
+    let file_path = Path::join(&dirs::home_dir().unwrap(), ".gantry/config.yaml");
+    match ::std::fs::remove_file(file_path) {
+        Ok(_) => {
+            println!("Connection information removed.");
+            Ok(())
+        }
+        Err(e) => Err(format!("Failed to delete configuration: {}", e).into()),
+    }
+}
+
+fn login() -> Result<(), Box<dyn ::std::error::Error>> {
+    print!("Paste the user JWT for authentication to NATS: ");
+    io::stdout().flush().unwrap();
+    let jwt: String = read!("{}\n");
+
+    print!("Paste the user seed: ");
+    io::stdout().flush().unwrap();
+    let seed: String = read!("{}\n");
+
+    print!("Enter the server URLs (comma-delimited): ");
+    io::stdout().flush().unwrap();
+    let urls: String = read!("{}\n");
+
+    let url_vec: Vec<String> = urls
+        .split(',')
+        .into_iter()
+        .map(|s| remove_whitespace(s))
+        .collect();
+    let config = ConnectionConfiguration {
+        server_urls: url_vec,
+        user_jwt: jwt,
+        user_seed: seed,
+    };
+    let yaml = serde_yaml::to_vec(&config)?;
+    let dir_path = Path::join(&dirs::home_dir().unwrap(), ".gantry/");
+    ::std::fs::create_dir_all(&dir_path)?;
+    let file_path = Path::join(&dir_path, "config.yaml");
+    let mut file = File::create(file_path)?;
+    file.write_all(&yaml)?;
+
+    println!("Credentials stored.");
+
+    Ok(())
+}
+
+fn remove_whitespace(s: &str) -> String {
+    s.chars().filter(|c| !c.is_whitespace()).collect()
 }
 
 fn main() -> Result<(), Box<dyn ::std::error::Error>> {

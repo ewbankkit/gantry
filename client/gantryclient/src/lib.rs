@@ -7,6 +7,16 @@ pub use protocol::stream::{DownloadRequest, FileChunk, TransferAck, UploadReques
 pub mod broker;
 pub mod chunks;
 
+#[macro_use]
+extern crate serde_derive;
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConnectionConfiguration {
+    pub server_urls: Vec<String>,
+    pub user_jwt: String,
+    pub user_seed: String,
+}
+
 /// An instance of a Gantry client connection
 #[derive(Clone)]
 pub struct Client {
@@ -17,6 +27,17 @@ impl Client {
     pub fn new(nats_urls: Vec<String>, jwt: &str, seed: &str) -> Client {
         Client {
             natsclient: broker::get_client(nats_urls, Some(jwt), Some(seed)).unwrap(),
+        }
+    }
+
+    pub fn from_config(config: ConnectionConfiguration) -> Client {
+        Client {
+            natsclient: broker::get_client(
+                config.server_urls,
+                Some(&config.user_jwt),
+                Some(&config.user_seed),
+            )
+            .unwrap(),
         }
     }
 
