@@ -13,7 +13,6 @@ categories = ["wasm", "api-bindings","command-line-utilities"]
 
 [badges]
 maintenance = { status = "actively-developed" }
-#travis-ci = { repository = "wascc/gantry/client", branch = "master" }
 
 [workspace]
 members = ["gantryclient"]
@@ -22,12 +21,12 @@ members = ["gantryclient"]
 gantryclient = { path = "gantryclient" }
 gantry-protocol = "0.0.1"
 quicli = "0.4"
-structopt = "0.3.9"
+structopt = "0.3.11"
 term-table = "1.2.0"
 indicatif = "0.14.0"
 crossbeam = "0.7.3"
 env_logger = "0.7.1"
-wascap = "0.4.0"
+wascap = "0.4.2"
 text_io = "0.1.8"
 serde_yaml = "0.8.11"
 dirs = "2.0.2"
