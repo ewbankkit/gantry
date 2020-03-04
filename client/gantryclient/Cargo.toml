@@ -1,6 +1,6 @@
 [package]
 name = "gantryclient"
-version = "0.0.2"
+version = "0.0.3"
 authors = ["Kevin Hoffman <alothien@gmail.com>"]
 edition = "2018"
 homepage = "https://wascc.dev"
@@ -16,10 +16,9 @@ travis-ci = { repository = "wascc/gantry/client", branch = "master" }
 
 [dependencies]
 natsclient = "0.0.6"
-gantry-protocol = "0.0.1"
+gantry-protocol = "0.0.3"
 log = "0.4.8"
 serde_derive = "1"
 serde = "1"
 serde_json = "1.0.48"
-prost = "0.6.1"
 crossbeam = "0.7.3"
