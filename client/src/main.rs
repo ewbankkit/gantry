@@ -5,7 +5,7 @@ use std::io::Read;
 use std::io::{self, Write};
 use std::{
     fs::{File, OpenOptions},
-    path::{Path, PathBuf},
+    path::{Path, PathBuf}, str::FromStr,
 };
 use structopt::clap::AppSettings;
 use structopt::StructOpt;
@@ -65,7 +65,18 @@ struct PutCommand {
 }
 
 #[derive(Debug, Clone, StructOpt)]
-enum GetCommand {
+struct GetCommand {
+    /// The kind of tokens to retrieve
+    #[structopt(short = "k", long = "kind")]
+    kind: TokenKind,
+
+    /// Optionally filter token results by issuer
+    #[structopt(short = "i", long = "issuer")]
+    issuer: Option<String>,    
+}
+
+#[derive(Debug, Clone, StructOpt, PartialEq)]
+enum TokenKind {
     /// Get the list of actors
     #[structopt(name = "actors")]
     Actor,
@@ -77,11 +88,23 @@ enum GetCommand {
     Account,
 }
 
-fn to_catalog_query_type(cmd: &GetCommand) -> i32 {
-    match cmd {
-        GetCommand::Actor => QueryType::Actor as i32,
-        GetCommand::Operator => QueryType::Operator as i32,
-        GetCommand::Account => QueryType::Account as i32,
+impl FromStr for TokenKind {
+    type Err = std::io::Error;
+    fn from_str(s: &str) -> Result<Self, Self::Err> { 
+        match s.to_lowercase().as_str() {
+            "actor" => Ok(TokenKind::Actor),
+            "operator" => Ok(TokenKind::Operator),
+            "account" => Ok(TokenKind::Account),
+            _ => Err(std::io::Error::new(std::io::ErrorKind::Other, "bad token type"))
+        }
+     }    
+}
+
+fn to_catalog_query_type(cmd: &GetCommand) -> QueryType {
+    match cmd.kind {
+        TokenKind::Actor => QueryType::Actor,
+        TokenKind::Operator => QueryType::Operator,
+        TokenKind::Account => QueryType::Account,
     }
 }
 
@@ -99,7 +122,7 @@ fn handle_command(cmd: CliCommand) -> Result<(), Box<dyn ::std::error::Error>> {
 fn query(cmd: GetCommand) -> Result<(), Box<dyn ::std::error::Error>> {
     let query = CatalogQuery {
         query_type: to_catalog_query_type(&cmd),
-        issuer: "".to_string(),
+        issuer: cmd.issuer,
     };
     let client = client();
     let results = client.query_catalog(&query)?;

@@ -19,34 +19,46 @@ pub(crate) fn query_catalog(
 ) -> Result<CatalogQueryResults, Box<dyn std::error::Error>> {
     ctx.log(&format!("Querying catalog: {:?}", query));
     let set_key = {
-        match QueryType::from_i32(query.query_type).unwrap() {
+        match query.query_type {
             QueryType::Actor => "gantry:actors",
             QueryType::Operator => "gantry:operators",
             QueryType::Account => "gantry:accounts",
         }
         .to_string()
     };
-    let results_raw = ctx.kv().set_members(&set_key)?;
-    ctx.log(&format!("Done quering - {} results", results_raw.len()));
+    let results_raw = ctx.kv().set_members(&set_key)?;    
 
     let items = results_raw
         .iter()
-        .map(|r| {
+        .filter_map(|r| {            
             let raw = ctx.kv().get(&format!("gantry:tokens:{}:0", r)).unwrap();
             let details: serde_json::Value = serde_json::from_str(&raw.unwrap()).unwrap();
-            CatalogQueryResult {
-                actor: None,
-                issuer: details["iss"].as_str().unwrap_or("??").to_string(),
-                name: details["wascap"]["name"]
-                    .as_str()
-                    .unwrap_or("??")
-                    .to_string(),
-                subject: r.to_string(),
-            }
+            let issuer = details["iss"].as_str().unwrap_or("??").to_string();
+            if let Some(ref tgt_issuer) = query.issuer {
+                if issuer == *tgt_issuer {
+                    Some(gen_result(details, issuer))
+                } else {
+                    None
+                }
+            } else {
+                Some(gen_result(details, issuer))
+            }            
         })
         .collect();
 
     Ok(CatalogQueryResults { results: items })
+}
+
+fn gen_result(details: serde_json::Value, issuer: String) -> CatalogQueryResult {
+    CatalogQueryResult {
+        actor: None,
+        issuer,
+        name: details["wascap"]["name"]
+            .as_str()
+            .unwrap_or("??")
+            .to_string(),
+        subject: details["sub"].as_str().unwrap_or("??").to_string(),
+    }
 }
 
 /// Places decoded token in gantry:tokens:{subject}:{revision}

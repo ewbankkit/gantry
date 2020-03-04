@@ -1,5 +1,4 @@
 use codec::messaging;
-use prost::Message;
 use wascap::jwt;
 use wascap::jwt::Account;
 use wascap::jwt::Actor;
@@ -7,6 +6,7 @@ use wascap::jwt::Operator;
 use wascc_host::host::{Invocation, InvocationResponse};
 use wascc_host::Middleware;
 use gantry_protocol as protocol;
+use protocol::{serialize, deserialize};
 
 pub(crate) struct JWTDecoder {}
 
@@ -19,19 +19,19 @@ impl JWTDecoder {
 impl Middleware for JWTDecoder {
     fn actor_pre_invoke(&self, inv: Invocation) -> wascc_host::Result<Invocation> {
         if inv.operation == messaging::OP_DELIVER_MESSAGE {
-            let msg = decode_deliver_message(inv.msg.as_slice())?;
-            if let Some(msg) = msg.message {
-                if msg.subject == protocol::catalog::SUBJECT_CATALOG_PUT_TOKEN {
-                    info!("Unpacking and Augmenting incoming JWT");
-                    let newinv = augment_token_message(
-                        msg.body.as_slice(),
-                        msg.reply_to,
-                        msg.subject,
-                        &inv,
-                    )?;
-                    return Ok(newinv);
-                }
+            let msg = decode_deliver_message(inv.msg.as_slice())?.message;
+            
+            if msg.subject == protocol::catalog::SUBJECT_CATALOG_PUT_TOKEN {
+                info!("Unpacking and Augmenting incoming JWT");
+                let newinv = augment_token_message(
+                    msg.body.as_slice(),
+                    msg.reply_to,
+                    msg.subject,
+                    &inv,
+                )?;
+                return Ok(newinv);
             }
+            
         }
         Ok(inv)
     }
@@ -53,7 +53,7 @@ impl Middleware for JWTDecoder {
 }
 
 fn decode_deliver_message(msg: &[u8]) -> wascc_host::Result<messaging::DeliverMessage> {
-    messaging::DeliverMessage::decode(msg).map_err(|e| e.into())
+    deserialize::<messaging::DeliverMessage>(msg).map_err(|e| e.into())
 }
 
 fn augment_token_message(
@@ -62,7 +62,7 @@ fn augment_token_message(
     subject: String,
     inv: &Invocation,
 ) -> wascc_host::Result<Invocation> {
-    let token = protocol::catalog::Token::decode(body)?;
+    let token = deserialize::<protocol::catalog::Token>(body)?;
 
     // Operators and Accounts can safely decode actor tokens (lossy), so this is
     // an "okay" way to get at the claim subject, then re-decode once we figure
@@ -102,21 +102,18 @@ fn augment_token_message(
             signature_valid: vres.signature_valid,
         }),
     };
-
-    let mut buf = Vec::new();
-    new_token.encode(&mut buf).unwrap();
+    let buf = serialize(&new_token)?;    
 
     let delivermsg = messaging::DeliverMessage {
-        message: Some(messaging::BrokerMessage {
+        message: messaging::BrokerMessage {
             body: buf,
             reply_to,
             subject,
-        }),
+        },
     };
 
-    let mut buf_final = Vec::new();
-    delivermsg.encode(&mut buf_final).unwrap();
-
+    let buf_final = serialize(&delivermsg)?;
+    
     Ok(Invocation {
         origin: inv.origin.clone(),
         operation: inv.operation.clone(),
@@ -128,11 +125,12 @@ fn augment_token_message(
 mod test {
     use super::JWTDecoder;
     use codec::messaging;
-    use nkeys::KeyPair;
-    use prost::Message;
+    use nkeys::KeyPair;    
     use wascap::jwt;
     use wascc_host::host::Invocation;
     use wascc_host::Middleware;
+    use super::protocol;
+    use super::protocol::{serialize, deserialize};
 
     #[test]
     fn middleware_augments_valid_token() {
@@ -161,8 +159,7 @@ mod test {
     // Invocation (contains)-> DeliverMessage (contains)-> BrokerMessage (contains)->Token
 
     fn make_invocation(message: messaging::DeliverMessage) -> Invocation {
-        let mut buf = Vec::new();
-        message.encode(&mut buf).unwrap();
+        let buf = serialize(&message).unwrap();        
         Invocation {
             operation: messaging::OP_DELIVER_MESSAGE.to_string(),
             origin: "wascc:messaging".to_string(),
@@ -177,14 +174,14 @@ mod test {
             decoded_token_json: "".to_string(),
             validation_result: None,
         };
-        let mut buf = Vec::new();
-        token.encode(&mut buf).unwrap();
+        let buf = serialize(&token).unwrap();
+        
         messaging::DeliverMessage {
-            message: Some(messaging::BrokerMessage {
+            message: messaging::BrokerMessage {
                 reply_to: "reply".to_string(),
                 subject: protocol::catalog::SUBJECT_CATALOG_PUT_TOKEN.to_string(),
                 body: buf,
-            }),
+            },
         }
     }
 
@@ -207,7 +204,7 @@ mod test {
     }
 
     fn extract_token(inv: &Invocation) -> protocol::catalog::Token {
-        let delivermsg = messaging::DeliverMessage::decode(inv.msg.as_ref()).unwrap();
-        protocol::catalog::Token::decode(delivermsg.message.unwrap().body.as_ref()).unwrap()
+        let delivermsg = deserialize::<messaging::DeliverMessage>(inv.msg.as_ref()).unwrap();
+        deserialize::<protocol::catalog::Token>(delivermsg.message.body.as_ref()).unwrap()
     }
 }

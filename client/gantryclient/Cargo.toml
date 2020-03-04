@@ -11,9 +11,6 @@ readme = "README.md"
 keywords = ["webassembly", "wasm", "wasi", "wascc", "gantry"]
 categories = ["wasm", "api-bindings","command-line-utilities"]
 
-[badges]
-travis-ci = { repository = "wascc/gantry/client", branch = "master" }
-
 [dependencies]
 natsclient = "0.0.6"
 gantry-protocol = "0.0.3"

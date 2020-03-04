@@ -1,6 +1,6 @@
 [package]
 name = "gantry"
-version = "0.0.2"
+version = "0.0.3"
 authors = ["Kevin Hoffman <alothien@gmail.com>"]
 edition = "2018"
 homepage = "https://wascc.dev"
@@ -19,7 +19,7 @@ members = ["gantryclient"]
 
 [dependencies]
 gantryclient = { path = "gantryclient" }
-gantry-protocol = "0.0.1"
+gantry-protocol = "0.0.3"
 quicli = "0.4"
 structopt = "0.3.11"
 term-table = "1.2.0"

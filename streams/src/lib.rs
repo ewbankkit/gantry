@@ -22,31 +22,21 @@ use protocol::stream::{
 
 const CHUNK_SIZE: u64 = 256 * 1024; // 256KB chunks
 
-actor_receive!(receive);
+actor_handlers!{ messaging::OP_DELIVER_MESSAGE => handle_message,
+                 blobstore::OP_RECEIVE_CHUNK => handle_blob_chunk,
+                 core::OP_HEALTH_REQUEST => health }
 
-pub fn receive(ctx: &CapabilitiesContext, operation: &str, msg: &[u8]) -> ReceiveResult {
-    match operation {
-        messaging::OP_DELIVER_MESSAGE => handle_message(ctx, msg),
-        blobstore::OP_RECEIVE_CHUNK => handle_blob_chunk(ctx, msg),
-        core::OP_HEALTH_REQUEST => Ok(vec![]),
-        _ => Err("Unknown operation".into()),
-    }
+pub fn health(_ctx: &CapabilitiesContext, _req: core::HealthRequest) -> ReceiveResult {
+    Ok(vec![])
 }
 
 fn handle_blob_chunk(
     ctx: &CapabilitiesContext,
-    msg: impl Into<blobstore::FileChunk>,
-) -> ReceiveResult {
-    let chunk = msg.into();
+    chunk: blobstore::FileChunk,
+) -> ReceiveResult {    
     ctx.log("Received chunk from blob store");
     let newchunk = convert_chunk(&chunk);
-    let mut buf = Vec::new();
-    newchunk.encode(&mut buf)?;
-    ctx.log(&format!(
-        "Converted chunk {} ({} bytes)",
-        newchunk.sequence_no,
-        buf.len()
-    ));
+    let buf = serialize(newchunk)?;        
     ctx.msg().publish(
         &format!(
             "{}{}",
@@ -72,21 +62,20 @@ fn convert_chunk(chunk: &blobstore::FileChunk) -> protocol::stream::FileChunk {
 
 fn handle_message(
     ctx: &CapabilitiesContext,
-    payload: impl Into<messaging::DeliverMessage>,
-) -> ReceiveResult {
-    let msg = payload.into();
-    let subject = msg.message.as_ref().unwrap().subject.clone();
+    msg: messaging::DeliverMessage,
+) -> ReceiveResult {    
+    let subject = msg.message.subject.clone();
 
     if subject == protocol::stream::SUBJECT_STREAM_DOWNLOAD {
-        let req = DownloadRequest::decode(msg.message.as_ref().unwrap().body.as_ref())?;
-        handle_download(ctx, req, &msg.message.as_ref().unwrap().reply_to)
+        let req = deserialize::<DownloadRequest>(msg.message.body.as_ref())?;
+        handle_download(ctx, req, &msg.message.reply_to)
     } else if subject == protocol::stream::SUBJECT_STREAM_UPLOAD {
-        let req = UploadRequest::decode(msg.message.as_ref().unwrap().body.as_ref())?;
-        handle_upload(ctx, req, &msg.message.as_ref().unwrap().reply_to)
+        let req = deserialize::<UploadRequest>(msg.message.body.as_ref())?;
+        handle_upload(ctx, req, &msg.message.reply_to)
     } else if subject.starts_with(SUBJECT_STREAM_UPLOAD_PREFIX) {
         let chunk =
-            protocol::stream::FileChunk::decode(msg.message.as_ref().unwrap().body.as_ref())?;
-        handle_upload_chunk(ctx, chunk, &msg.message.as_ref().unwrap().reply_to)
+            deserialize::<protocol::stream::FileChunk>(msg.message.body.as_ref())?;
+        handle_upload_chunk(ctx, chunk, &msg.message.reply_to)
     } else {
         Err("Unknown stream request".into())
     }
@@ -112,8 +101,7 @@ fn handle_upload_chunk(
         sequence_no: chunk.sequence_no,
         success: true
     };
-    let mut buf = Vec::new();
-    ack.encode(&mut buf)?;
+    let buf = serialize(&ack)?;    
     ctx.msg().publish(reply_to, None, &buf)?;
     Ok(vec![])
 }
@@ -138,8 +126,7 @@ fn handle_upload(ctx: &CapabilitiesContext, req: UploadRequest, reply_to: &str) 
         total_chunks: blob.byte_size / CHUNK_SIZE,
     };    
 
-    let mut buf = Vec::new();
-    ack.encode(&mut buf)?;
+    let buf = serialize(&ack)?;    
     ctx.msg().publish(reply_to, None, &buf)?;
     ctx.objectstore()
         .start_upload(&blob, req.chunk_size, req.total_bytes)?;
@@ -167,8 +154,7 @@ fn handle_download(
             total_chunks: blobinfo.byte_size / CHUNK_SIZE,
         };
 
-        let mut buf = Vec::new();
-        ack.encode(&mut buf)?;
+        let buf = serialize(ack)?;        
         ctx.msg().publish(reply_to, None, &buf)?;
         ctx.objectstore().start_download(&blobinfo, CHUNK_SIZE)?;
         Ok(vec![])
@@ -187,7 +173,7 @@ fn catalog_get_actors(
         messaging::OP_DELIVER_MESSAGE,
         &gen_actor_query(),
     )?;
-    let query_res = protocol::catalog::CatalogQueryResults::decode(results.as_ref())?;
+    let query_res = deserialize::<protocol::catalog::CatalogQueryResults>(results.as_ref())?;
     Ok(query_res
         .results
         .iter()
@@ -195,21 +181,18 @@ fn catalog_get_actors(
         .collect())
 }
 
-fn gen_actor_query() -> Vec<u8> {
-    let mut buf = Vec::new();
+fn gen_actor_query() -> Vec<u8> {    
     let q = protocol::catalog::CatalogQuery {
-        issuer: "".to_string(),
-        query_type: protocol::catalog::QueryType::Actor as i32,
+        issuer: None,
+        query_type: protocol::catalog::QueryType::Actor,
     };
-    q.encode(&mut buf).unwrap();
+    let buf = serialize(&q).unwrap();    
     let msg = messaging::DeliverMessage {
-        message: Some(messaging::BrokerMessage {
+        message: messaging::BrokerMessage {
             reply_to: "".to_string(),
             subject: protocol::catalog::SUBJECT_CATALOG_QUERY.to_string(),
             body: buf,
-        }),
+        },
     };
-    let mut outbuf = Vec::new();
-    msg.encode(&mut outbuf).unwrap();
-    outbuf
+    serialize(&msg).unwrap()    
 }

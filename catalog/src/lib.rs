@@ -26,22 +26,19 @@ lazy_static! {
     static ref OPERATOR_SIGNERS: RwLock<Vec<String>> = RwLock::new(Vec::new());
 }
 
-actor_receive!(receive);
+actor_handlers!{ messaging::OP_DELIVER_MESSAGE => handle_message,
+                core::OP_CONFIGURE => handle_config,
+                core::OP_HEALTH_REQUEST => health }
 
-pub fn receive(ctx: &CapabilitiesContext, operation: &str, msg: &[u8]) -> ReceiveResult {
-    match operation {
-        messaging::OP_DELIVER_MESSAGE => handle_message(ctx, msg),
-        core::OP_CONFIGURE => handle_config(ctx, msg),
-        core::OP_HEALTH_REQUEST => Ok(vec![]),
-        _ => Err("Unknown operation".into()),
-    }
+pub fn health(_ctx: &CapabilitiesContext, _req: core::HealthRequest) -> ReceiveResult {
+    Ok(vec![])
 }
+
 
 fn handle_config(
     ctx: &CapabilitiesContext,
-    payload: impl Into<core::CapabilityConfiguration>,
-) -> ReceiveResult {
-    let config = payload.into();
+    config: core::CapabilityConfiguration,
+) -> ReceiveResult {    
     let mut lock = OPERATOR_SIGNERS.write().unwrap();
     lock.push(config.values.get("operator").unwrap().to_string());
     for signer in config.values.get("signers").unwrap().split(',') {
@@ -56,25 +53,24 @@ fn handle_config(
 
 fn handle_message(
     ctx: &CapabilitiesContext,
-    payload: impl Into<messaging::DeliverMessage>,
-) -> ReceiveResult {
-    let msg = payload.into();
-    let subject = msg.message.as_ref().unwrap().subject.clone();
+    msg:  messaging::DeliverMessage,
+) -> ReceiveResult {    
+    let subject = msg.message.subject.clone();
 
     if subject == protocol::catalog::SUBJECT_CATALOG_PUT_TOKEN {
-        let token = protocol::catalog::Token::decode(msg.message.as_ref().unwrap().body.as_ref())?;
+        let token = deserialize::<protocol::catalog::Token>(msg.message.body.as_ref())?;
         publish_results(
             ctx,
-            &msg.message.as_ref().unwrap().reply_to,
-            catalog::put_token(ctx, &token)?,
+            &msg.message.reply_to,
+            serialize(catalog::put_token(ctx, &token)?)?,
         )
     } else if subject == protocol::catalog::SUBJECT_CATALOG_QUERY {
         let query =
-            protocol::catalog::CatalogQuery::decode(msg.message.as_ref().unwrap().body.as_ref())?;
+            deserialize::<protocol::catalog::CatalogQuery>(msg.message.body.as_ref())?;
         publish_results(
             ctx,
-            &msg.message.as_ref().unwrap().reply_to,
-            catalog::query_catalog(ctx, &query)?,
+            &msg.message.reply_to,
+            serialize(catalog::query_catalog(ctx, &query)?)?,
         )
     } else {
         Err("Unknown catalog request subject".into())
@@ -84,13 +80,11 @@ fn handle_message(
 fn publish_results(
     ctx: &CapabilitiesContext,
     subject: &str,
-    results: impl prost::Message,
-) -> ReceiveResult {
-    let mut buf = Vec::new();
-    results.encode(&mut buf)?;
+    results: Vec<u8>,
+) -> ReceiveResult {    
     if !subject.is_empty() {
         ctx.log(&format!("About to publish to {}", subject));
-        ctx.msg().publish(subject, None, &buf)?;
+        ctx.msg().publish(subject, None, &results)?;
     }
-    Ok(buf)
+    Ok(results)
 }
