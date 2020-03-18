@@ -288,11 +288,12 @@ dependencies = [
 
 [[package]]
 name = "crossbeam-channel"
-version = "0.4.0"
+version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "acec9a3b0b3559f15aee4f90746c4e5e293b701c0f7d3925d24e01645267b68c"
+checksum = "cced8691919c02aac3cb0a1bc2e9b73d89e832bf9a06fc579d4e71b68a2da061"
 dependencies = [
  "crossbeam-utils",
+ "maybe-uninit",
 ]
 
 [[package]]
@@ -342,15 +343,15 @@ dependencies = [
 
 [[package]]
 name = "curve25519-dalek"
-version = "2.0.0"
+version = "1.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "26778518a7f6cffa1d25a44b602b62b979bd88adb9e99ffec546998cf3404839"
+checksum = "8b7dcd30ba50cdf88b55b033456138b7c0ac4afdc436d82e1b79f370f24cc66d"
 dependencies = [
  "byteorder",
+ "clear_on_drop",
  "digest",
- "rand_core 0.5.1",
+ "rand_core 0.3.1",
  "subtle",
- "zeroize",
 ]
 
 [[package]]
@@ -390,9 +391,9 @@ dependencies = [
 
 [[package]]
 name = "data-encoding"
-version = "2.1.2"
+version = "2.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f4f47ca1860a761136924ddd2422ba77b2ea54fe8cc75b9040804a0d9d32ad97"
+checksum = "11c0346158a19b3627234e15596f5e465c360fcdb97d817bcb255e0510f5a788"
 
 [[package]]
 name = "derive_builder"
@@ -467,13 +468,15 @@ dependencies = [
 
 [[package]]
 name = "ed25519-dalek"
-version = "1.0.0-pre.3"
+version = "1.0.0-pre.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "978710b352437433c97b2bff193f2fb1dfd58a093f863dd95e225a19baa599a2"
+checksum = "845aaacc16f01178f33349e7c992ecd0cee095aa5e577f0f4dee35971bd36455"
 dependencies = [
  "clear_on_drop",
  "curve25519-dalek",
- "rand 0.7.3",
+ "failure",
+ "rand_core 0.3.1",
+ "rand_os",
  "sha2",
 ]
 
@@ -596,7 +599,7 @@ dependencies = [
 
 [[package]]
 name = "gantryclient"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "crossbeam",
  "gantry-protocol",
@@ -773,6 +776,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7ffc5c5338469d4d3ea17d269fa8ea3512ad247247c30bd2df69e68309ed0a08"
 
 [[package]]
+name = "maybe-uninit"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "60302e4db3a61da70c0cb7991976248362f30319e88850c487b9b95bbf059e00"
+
+[[package]]
 name = "memchr"
 version = "2.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -801,9 +810,9 @@ dependencies = [
 
 [[package]]
 name = "natsclient"
-version = "0.0.6"
+version = "0.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "09a95f8808b2c9ce5f2d12dbe54b064a273dfda836b3b3891ae1c49977eea4c7"
+checksum = "f6426d475e2df0b47b7a293ae8f32bd6e949153ed124596daff2c13f787a58cb"
 dependencies = [
  "crossbeam",
  "crossbeam-channel",
@@ -821,9 +830,9 @@ dependencies = [
 
 [[package]]
 name = "nkeys"
-version = "0.0.8"
+version = "0.0.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "12d608c4580426634b753dc30e7e2f5dfe90aa45bae841b3096634b819926d4d"
+checksum = "777c4b6e0fa1c1250e36ee89ff41d2278b52b3abc63f02b107df1c9b8406d912"
 dependencies = [
  "byteorder",
  "data-encoding",
@@ -1198,9 +1207,9 @@ dependencies = [
 
 [[package]]
 name = "regex"
-version = "1.3.4"
+version = "1.3.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "322cf97724bea3ee221b78fe25ac9c46114ebb51747ad5babd51a2fc6a8235a8"
+checksum = "8900ebc1363efa7ea1c399ccc32daed870b4002651e0bed86e72d501ebbe0048"
 dependencies = [
  "aho-corasick",
  "memchr",
@@ -1210,9 +1219,9 @@ dependencies = [
 
 [[package]]
 name = "regex-syntax"
-version = "0.6.14"
+version = "0.6.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b28dfe3fe9badec5dbf0a79a9cccad2cfc2ab5484bdb3e44cbd1ae8b3ba2be06"
+checksum = "7fe5bd57d1d7414c6b5ed48563a2c855d995ff777729dcd91c369ec7fea395ae"
 
 [[package]]
 name = "remove_dir_all"
@@ -1387,9 +1396,9 @@ dependencies = [
 
 [[package]]
 name = "signatory"
-version = "0.16.0"
+version = "0.18.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e8bf586660531e464ee01168605e858ddc90b7191e7fe4206478d257e0bfcc94"
+checksum = "98887ae129a828815e623e2656c6cfcc0a4b2926dcc6104e0c866d9f2f95041c"
 dependencies = [
  "ed25519",
  "getrandom",
@@ -1400,9 +1409,9 @@ dependencies = [
 
 [[package]]
 name = "signatory-dalek"
-version = "0.16.0"
+version = "0.18.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5e3df1d62aac304b6ed55b71e652b087aed5c76443c5dbbbef124cefeee486d3"
+checksum = "24b5d13f80962e02eb1113e2bd0c698b6b50db6cffa9b4c48dcfbf33abe2cbe7"
 dependencies = [
  "digest",
  "ed25519-dalek",
@@ -1709,9 +1718,9 @@ dependencies = [
 
 [[package]]
 name = "wascap"
-version = "0.4.2"
+version = "0.4.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f016dc358574d9a7b0b64eaebf83dcca2d7d294642873c4e8be391aaa1cda9b5"
+checksum = "f34f4acdd82e8561ec83195834c0faf0d428fe20c7f4d9c99b42349a0bf8f0d2"
 dependencies = [
  "base64",
  "chrono",

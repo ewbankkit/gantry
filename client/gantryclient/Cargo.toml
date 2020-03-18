@@ -1,6 +1,6 @@
 [package]
 name = "gantryclient"
-version = "0.0.3"
+version = "0.0.4"
 authors = ["Kevin Hoffman <alothien@gmail.com>"]
 edition = "2018"
 homepage = "https://wascc.dev"
@@ -12,7 +12,7 @@ keywords = ["webassembly", "wasm", "wasi", "wascc", "gantry"]
 categories = ["wasm", "api-bindings","command-line-utilities"]
 
 [dependencies]
-natsclient = "0.0.6"
+natsclient = "0.0.7"
 gantry-protocol = "0.0.3"
 log = "0.4.8"
 serde_derive = "1"
