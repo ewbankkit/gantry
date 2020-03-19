@@ -127,7 +127,16 @@ fn operator_config(op: &str, valid_signers: &[String]) -> HashMap<String, String
 
 fn generate_fs_config() -> HashMap<String, String> {
     let mut hm = HashMap::new();
-    hm.insert("ROOT".to_string(), "/tmp".to_string());
+    //hm.insert("ROOT".to_string(), "/tmp".to_string());
+    hm.insert("ENDPOINT".to_string(), "http://localhost:9000".to_string());
+    hm.insert("REGION".to_string(), "us-east-1".to_string());
+    hm.insert("AWS_ACCESS_KEY".to_string(), "minioadmin".to_string());
+    hm.insert(
+        "AWS_SECRET_ACCESS_KEY".to_string(),
+        "minioadmin".to_string(),
+    );
+
+
 
     hm
 }

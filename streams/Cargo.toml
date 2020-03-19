@@ -9,8 +9,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 wascc-actor = "0.4.0"
-#gantry-protocol = "0.0.1"
-gantry-protocol = { path = "../protocol" }
+gantry-protocol = "0.0.3"
 serde_json = "1.0.48"
 prost = "0.6.1"
 

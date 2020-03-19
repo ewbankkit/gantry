@@ -55,7 +55,7 @@ fn convert_chunk(chunk: &blobstore::FileChunk) -> protocol::stream::FileChunk {
         actor: chunk.id[0..chunk.id.len() - 5].to_string(),
         chunk_size: chunk.chunk_size,
         total_bytes: chunk.total_bytes,
-        total_chunks: chunk.total_bytes / chunk.chunk_size,
+        total_chunks: total_chunks(chunk.total_bytes, chunk.chunk_size),
         chunk_bytes: chunk.chunk_bytes.clone(),
     }
 }
@@ -133,6 +133,14 @@ fn handle_upload(ctx: &CapabilitiesContext, req: UploadRequest, reply_to: &str) 
     Ok(vec![])
 }
 
+fn total_chunks(bytes: u64, chunk_size: u64) -> u64 {
+    let mut c = bytes / chunk_size;
+    if bytes % CHUNK_SIZE != 0 {
+        c = c+ 1;
+    }
+    c
+}
+
 fn handle_download(
     ctx: &CapabilitiesContext,
     req: DownloadRequest,
@@ -151,7 +159,7 @@ fn handle_download(
             actor: req.actor.to_string(),
             total_bytes: blobinfo.byte_size,
             chunk_size: CHUNK_SIZE,
-            total_chunks: blobinfo.byte_size / CHUNK_SIZE,
+            total_chunks: total_chunks(blobinfo.byte_size, CHUNK_SIZE),
         };
 
         let buf = serialize(ack)?;        

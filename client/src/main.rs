@@ -1,3 +1,6 @@
+#[macro_use]
+extern crate log;
+
 use gantry_protocol as protocol;
 use gantryclient::{Chunks, Client, ConnectionConfiguration, CHUNK_SIZE};
 use protocol::catalog::*;
@@ -5,7 +8,7 @@ use std::io::Read;
 use std::io::{self, Write};
 use std::{
     fs::{File, OpenOptions},
-    path::{Path, PathBuf}, str::FromStr,
+    path::{Path, PathBuf}, str::FromStr, sync::{RwLock, Arc},
 };
 use structopt::clap::AppSettings;
 use structopt::StructOpt;
@@ -184,7 +187,7 @@ fn put(cmd: PutCommand) -> Result<(), Box<dyn ::std::error::Error>> {
     Ok(())
 }
 
-fn download(cmd: DownloadCommand) -> Result<(), Box<dyn ::std::error::Error>> {
+fn download(cmd: DownloadCommand) -> Result<(), Box<dyn ::std::error::Error>> {    
     let client = client();
     use indicatif::{ProgressBar, ProgressStyle};
 
@@ -192,27 +195,33 @@ fn download(cmd: DownloadCommand) -> Result<(), Box<dyn ::std::error::Error>> {
     pb.set_style(ProgressStyle::default_bar()
         .template("{spinner:.green} [{elapsed_precise}] [{bar:40.cyan/blue}] {bytes}/{total_bytes} ({eta})")
         .progress_chars("#>-"));
-    pb.set_message(&format!("{}.wasm", cmd.actor));
+    
 
     let filename = format!("{}.wasm", cmd.actor);
-
-    let _ack = client.download_actor(&cmd.actor, move |chunk| {
-        let mut file = OpenOptions::new()
+    let (s,r) = crossbeam::channel::unbounded();
+    let bytevec = Arc::new(RwLock::new(Vec::new()));
+    let b = bytevec.clone();
+    let _ack = client.download_actor(&cmd.actor,  move |chunk| {          
+        bytevec.write().unwrap().extend_from_slice(&chunk.chunk_bytes);
+        pb.set_length(chunk.total_bytes);
+        pb.set_position(chunk.sequence_no * chunk.chunk_size);
+        if chunk.sequence_no == chunk.total_chunks {                            
+            pb.finish();
+            s.send(true).unwrap();            
+        }
+        Ok(())        
+    })?;
+    let _ = r.recv().unwrap();
+    let vec = b.read().unwrap();
+    let mut file = OpenOptions::new()
             .create(true)
-            .append(true)
+            .write(true)         
             .open(&filename)
             .unwrap();
-        pb.set_length(chunk.total_bytes);
-        file.write(&chunk.chunk_bytes).unwrap();
-        let new = (chunk.sequence_no * chunk.chunk_size) + chunk.chunk_bytes.len() as u64;
-        pb.set_position(new);
-        if chunk.sequence_no == chunk.total_chunks {
-            pb.finish_with_message("downloaded");
-        }
-        Ok(())
-    })?;
 
-    ::std::thread::sleep(std::time::Duration::from_millis(5000)); //TODO: this is a hack. stop it.
+    file.write(&vec).unwrap(); 
+    file.flush()?;       
+        
     Ok(())
 }
 
